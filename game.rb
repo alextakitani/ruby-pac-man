@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'rubygame'
-require './game_object'
-require './roleman'
+require './lib/game_object'
+require './lib/roleman'
 Rubygame::TTF.setup
 
 class Game

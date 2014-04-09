@@ -1,7 +1,7 @@
 class Roleman < GameObject
     def initialize x, y, up_key, down_key, left_key, right_key, top_limit, bottom_limit,left_limit,right_limit
         surface = Rubygame::Surface.load "pac_man.png"
-        @vx = @vy = 1
+        @vx = @vy = 0
         @up_key = up_key
         @down_key = down_key
         @left_key = left_key
@@ -49,13 +49,17 @@ class Roleman < GameObject
         @y += @vy
 
         if @moving_up and @y > @top_limit
+            self.surface = Rubygame::Surface.load "ball.png"
             @y -= 5
         end
         if @moving_down and @y+@height < @bottom_limit
             @y += 5
         end
-        if @moving_left
+        if @moving_left and @x > @left_limit
             @x -= 5
+        end
+        if @moving_right and @x+@height < @right_limit
+            @x += 5
         end
 
     end
