@@ -1,6 +1,15 @@
 class Roleman < GameObject
+    RIGHT_IMG = "media/right.png"
+    RIGHT_IMG_ALT = "media/right_alt.png"
+    LEFT_IMG = "media/left.png"
+    LEFT_IMG_ALT = "media/left_alt.png"
+    UP_IMG = "media/up.png"
+    UP_IMG_ALT = "media/up_alt.png"
+    DOWN_IMG = "media/down.png"
+    DOWN_IMG_ALT = "media/down_alt.png"
+
     def initialize x, y, up_key, down_key, left_key, right_key, top_limit, bottom_limit,left_limit,right_limit
-        surface = Rubygame::Surface.load "pac_man.png"
+        surface = Rubygame::Surface.load Roleman::RIGHT_IMG
         @vx = @vy = 0
         @up_key = up_key
         @down_key = down_key
@@ -14,6 +23,7 @@ class Roleman < GameObject
         @bottom_limit = bottom_limit
         @left_limit = left_limit
         @right_limit = right_limit
+        @selected_image = ""
         super x, y, surface
     end
 
@@ -49,16 +59,23 @@ class Roleman < GameObject
         @y += @vy
 
         if @moving_up and @y > @top_limit
-            self.surface = Rubygame::Surface.load "ball.png"
+            @selected_image = @selected_image == Roleman::UP_IMG ? Roleman::UP_IMG_ALT : Roleman::UP_IMG
+            self.surface = Rubygame::Surface.load @selected_image
             @y -= 5
         end
         if @moving_down and @y+@height < @bottom_limit
+            @selected_image = @selected_image == Roleman::DOWN_IMG ? Roleman::DOWN_IMG_ALT : Roleman::DOWN_IMG
+            self.surface = Rubygame::Surface.load @selected_image
             @y += 5
         end
         if @moving_left and @x > @left_limit
+            @selected_image = @selected_image == Roleman::LEFT_IMG ? Roleman::LEFT_IMG_ALT : Roleman::LEFT_IMG
+            self.surface = Rubygame::Surface.load @selected_image
             @x -= 5
         end
         if @moving_right and @x+@height < @right_limit
+            @selected_image = @selected_image == Roleman::RIGHT_IMG ? Roleman::RIGHT_IMG_ALT : Roleman::RIGHT_IMG
+            self.surface = Rubygame::Surface.load @selected_image
             @x += 5
         end
 

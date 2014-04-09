@@ -2,10 +2,18 @@ require 'rubygems'
 require 'rubygame'
 require './lib/game_object'
 require './lib/roleman'
+require './lib/moeda'
+require './lib/pulica'
+require 'pry'
+require 'pry-nav'
 Rubygame::TTF.setup
-
+Rubygame::Mixer::open_audio
 class Game
     def initialize
+        @music = Rubygame::Sound.load "media/leklek.ogg"
+        @music.play
+        @gemido = Rubygame::Sound.load "media/groan.wav"
+
         @screen = Rubygame::Screen.new [640, 480], 0, [Rubygame::HWSURFACE, Rubygame::DOUBLEBUF]
         @screen.title = "Role-Man"
 
@@ -17,11 +25,22 @@ class Game
         limit_right = @screen.width - 10
 
         @roleman = Roleman.new @screen.width/2, @screen.height/2, Rubygame::K_UP, Rubygame::K_DOWN, Rubygame::K_LEFT, Rubygame::K_RIGHT, 10, limit, 10,limit_right
+        @pulica = Pulica.new 350,350
         @won = false
 
         @win_text = Text.new
-        @play_again_text = Text.new 0, 0, "Play Again? Press Y or N", 40
+        @play_again_text = Text.new 0, 0, "lelekar denovo? Aperte S or N", 24
         @background = Background.new @screen.width, @screen.height
+
+        @moedas = []
+        64.step(512,64) do |x|
+           moeda = Moeda.new(x,32)
+           @moedas << moeda
+           moeda = Moeda.new(x,96)
+           @moedas << moeda
+        end
+
+
     end
 
     def run!
@@ -45,10 +64,30 @@ class Game
         @play_again_text.y = @win_text.y+60
     end
 
+    def loose
+        @win_text.text = "Acabou o role, os homi mi pegaro"
+
+        @won = true
+        @win_text.center_x @screen.width
+        @win_text.center_y @screen.height
+        @play_again_text.center_x @screen.width
+        @play_again_text.y = @win_text.y+60
+    end
+
     def update
 
         @roleman.update @screen unless @won
 
+        @moedas.each do |moeda|
+            if collision? @roleman,moeda
+                @moedas.delete(moeda)
+                @gemido.play
+            end
+        end
+
+        if collision? @roleman, @pulica
+            loose
+        end
 
         @queue.each do |ev|
             @roleman.handle_event ev
@@ -60,7 +99,7 @@ class Game
                     if ev.key == Rubygame::K_ESCAPE
                         @queue.push Rubygame::QuitEvent.new
                     end
-                    if ev.key == Rubygame::K_Y and @won
+                    if ev.key == Rubygame::K_S and @won
                         # Reset the game
                         @player.center_y @screen.height
                         @enemy.center_y @screen.height
@@ -86,8 +125,15 @@ class Game
         @screen.fill [0,0,0]
 
         unless @won
+
             @background.draw @screen
+
+            @moedas.each{|m| m.draw @screen}
+
             @roleman.draw @screen
+
+            @pulica.draw @screen
+
         else
             @win_text.draw @screen
             @play_again_text.draw @screen
@@ -107,63 +153,6 @@ end
 
 
 
-class Paddle < GameObject
-    def initialize x, y, score_x, score_y, up_key, down_key, top_limit, bottom_limit
-        surface = Rubygame::Surface.new [20, 100]
-        surface.fill [255, 255, 255]
-        @up_key = up_key
-        @down_key = down_key
-        @moving_up = false
-        @moving_down = false
-        @top_limit = top_limit
-        @bottom_limit = bottom_limit
-
-        @score = 0
-        @score_text = Text.new score_x, score_y, @score.to_s, 100
-
-        super x, y, surface
-    end
-
-    def handle_event event
-        case event
-            when Rubygame::KeyDownEvent
-                if event.key == @up_key
-                    @moving_up = true
-                elsif event.key == @down_key
-                    @moving_down = true
-                end
-            when Rubygame::KeyUpEvent
-                if event.key == @up_key
-                    @moving_up = false
-                elsif event.key == @down_key
-                    @moving_down = false
-                end
-        end
-    end
-
-    def update
-        if @moving_up and @y > @top_limit
-            @y -= 5
-        end
-        if @moving_down and @y+@height < @bottom_limit
-            @y += 5
-        end
-    end
-
-    def score
-        @score
-    end
-
-    def score= num
-        @score = num
-        @score_text.text = num.to_s
-    end
-
-    def draw screen
-        super
-        @score_text.draw screen
-    end
-end
 
 class Background < GameObject
     def initialize width, height
@@ -188,8 +177,8 @@ class Background < GameObject
 end
 
 class Text < GameObject
-    def initialize x=0, y=0, text="Hello, World!", size=48
-        @font = Rubygame::TTF.new "Freshman.ttf", size
+    def initialize x=0, y=0, text="Hello, World!", size=36
+        @font = Rubygame::TTF.new "media/Freshman.ttf", size
         @text = text
         super x, y, rerender_text()
     end
