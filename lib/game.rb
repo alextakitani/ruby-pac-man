@@ -1,18 +1,19 @@
 require 'rubygems'
 require 'rubygame'
-require './lib/game_object'
-require './lib/roleman'
-require './lib/moeda'
-require './lib/pulica'
+require './game_object'
+require './roleman'
+require './moeda'
+require './pulica'
+require './tijolo'
 require 'pry'
 require 'pry-nav'
 Rubygame::TTF.setup
 Rubygame::Mixer::open_audio
 class Game
     def initialize
-        @music = Rubygame::Sound.load "media/leklek.ogg"
+        @music = Rubygame::Sound.load "../media/leklek.ogg"
         @music.play
-        @gemido = Rubygame::Sound.load "media/groan.wav"
+        @gemido = Rubygame::Sound.load "../media/groan.wav"
 
         @screen = Rubygame::Screen.new [640, 480], 0, [Rubygame::HWSURFACE, Rubygame::DOUBLEBUF]
         @screen.title = "Role-Man"
@@ -25,7 +26,11 @@ class Game
         limit_right = @screen.width - 10
 
         @roleman = Roleman.new @screen.width/2, @screen.height/2, Rubygame::K_UP, Rubygame::K_DOWN, Rubygame::K_LEFT, Rubygame::K_RIGHT, 10, limit, 10,limit_right
-        @pulica = Pulica.new 350,350
+        @puli_x = 0
+        @puli_y = 350
+        @delegacia = []
+        @delegacia << Pulica.new(350,350)
+        @delegacia << Pulica.new(350,50)
         @won = false
 
         @win_text = Text.new
@@ -33,14 +38,27 @@ class Game
         @background = Background.new @screen.width, @screen.height
 
         @moedas = []
+        carrega_rolezeiras
+        @paredes = []
+        carrega_paredes
+
+
+    end
+
+    def carrega_paredes
+        tijolo = Tijolo.new 300,200
+        @paredes << tijolo
+    end
+
+    def carrega_rolezeiras
         64.step(512,64) do |x|
            moeda = Moeda.new(x,32)
            @moedas << moeda
            moeda = Moeda.new(x,96)
            @moedas << moeda
+           moeda = Moeda.new(x,160)
+           @moedas << moeda
         end
-
-
     end
 
     def run!
@@ -51,17 +69,16 @@ class Game
         end
     end
 
-    def win player
-        if player == 1
-            @win_text.text = "Player 1 Wins!"
-        elsif player == 2
-            @win_text.text = "Player 2 Wins!"
-        end
+    def win
+
+        @win_text.text = "Ae Lek, pegou as rolezeira!"
+
         @won = true
         @win_text.center_x @screen.width
         @win_text.center_y @screen.height
         @play_again_text.center_x @screen.width
         @play_again_text.y = @win_text.y+60
+
     end
 
     def loose
@@ -77,6 +94,7 @@ class Game
     def update
 
         @roleman.update @screen unless @won
+        @delegacia.each{|p| p.update @screen, @roleman}
 
         @moedas.each do |moeda|
             if collision? @roleman,moeda
@@ -85,9 +103,13 @@ class Game
             end
         end
 
-        if collision? @roleman, @pulica
-            loose
+        @delegacia.each do |pulica|
+            if collision? @roleman, pulica
+                loose
+            end
         end
+
+        win if @moedas.empty?
 
         @queue.each do |ev|
             @roleman.handle_event ev
@@ -101,10 +123,16 @@ class Game
                     end
                     if ev.key == Rubygame::K_S and @won
                         # Reset the game
-                        @player.center_y @screen.height
-                        @enemy.center_y @screen.height
-                        @player.score = 0
-                        @enemy.score = 0
+                        @roleman.center_y @screen.height
+
+                        carrega_rolezeiras
+
+                        @delegacia.each do |pulica|
+                            pulica.x = @puli_x + 50
+                            pulica.y = @puli_y
+                            @puli_x += 50
+                        end
+
                         @won = false
                     end
                     if ev.key == Rubygame::K_N and @won
@@ -132,7 +160,9 @@ class Game
 
             @roleman.draw @screen
 
-            @pulica.draw @screen
+            @delegacia.each{ |p| p.draw @screen}
+
+            @paredes.each{ |p| p.draw @screen}
 
         else
             @win_text.draw @screen
@@ -169,8 +199,6 @@ class Background < GameObject
         surface.draw_box_s [0, surface.height-10], [surface.width, surface.height], white
         # Right
         surface.draw_box_s [surface.width-10, 0], [surface.width, surface.height], white
-        # Middle Divide
-        #surface.draw_box_s [surface.width/2-5, 0], [surface.width/2+5, surface.height], white
 
         super 0, 0, surface
     end
@@ -178,7 +206,7 @@ end
 
 class Text < GameObject
     def initialize x=0, y=0, text="Hello, World!", size=36
-        @font = Rubygame::TTF.new "media/Freshman.ttf", size
+        @font = Rubygame::TTF.new "../media/Freshman.ttf", size
         @text = text
         super x, y, rerender_text()
     end

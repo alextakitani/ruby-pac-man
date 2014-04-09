@@ -1,12 +1,12 @@
 class Roleman < GameObject
-    RIGHT_IMG = "media/right.png"
-    RIGHT_IMG_ALT = "media/right_alt.png"
-    LEFT_IMG = "media/left.png"
-    LEFT_IMG_ALT = "media/left_alt.png"
-    UP_IMG = "media/up.png"
-    UP_IMG_ALT = "media/up_alt.png"
-    DOWN_IMG = "media/down.png"
-    DOWN_IMG_ALT = "media/down_alt.png"
+    RIGHT_IMG = "../media/right.png"
+    RIGHT_IMG_ALT = "../media/right_alt.png"
+    LEFT_IMG = "../media/left.png"
+    LEFT_IMG_ALT = "../media/left_alt.png"
+    UP_IMG = "../media/up.png"
+    UP_IMG_ALT = "../media/up_alt.png"
+    DOWN_IMG = "../media/down.png"
+    DOWN_IMG_ALT = "../media/down_alt.png"
 
     def initialize x, y, up_key, down_key, left_key, right_key, top_limit, bottom_limit,left_limit,right_limit
         surface = Rubygame::Surface.load Roleman::RIGHT_IMG

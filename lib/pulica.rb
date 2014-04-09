@@ -1,12 +1,12 @@
 class Pulica < GameObject
-    RIGHT_IMG = "media/gualda.png"
-    RIGHT_IMG_ALT = "media/gualda.png"
-    LEFT_IMG = "media/gualda.png"
-    LEFT_IMG_ALT = "media/gualda.png"
-    UP_IMG = "media/gualda.png"
-    UP_IMG_ALT = "media/gualda.png"
-    DOWN_IMG = "media/gualda.png"
-    DOWN_IMG_ALT = "media/gualda.png"
+    RIGHT_IMG = "../media/gualda.png"
+    RIGHT_IMG_ALT = "../media/gualda.png"
+    LEFT_IMG = "../media/gualda.png"
+    LEFT_IMG_ALT = "../media/gualda.png"
+    UP_IMG = "../media/gualda.png"
+    UP_IMG_ALT = "../media/gualda.png"
+    DOWN_IMG = "../media/gualda.png"
+    DOWN_IMG_ALT = "../media/gualda.png"
 
     def initialize x, y
         surface = Rubygame::Surface.load Pulica::RIGHT_IMG
@@ -19,9 +19,21 @@ class Pulica < GameObject
     end
 
 
-    def update screen
+    def update screen,roleman
         @x += @vx
         @y += @vy
+
+        if roleman.x > self.x
+            @x += 1
+        else
+            @x -=1
+        end
+
+        if roleman.y > self.y
+            @y += 1
+        else
+            @y -=1
+        end
 
         if @moving_up and @y > @top_limit
             @selected_image = @selected_image == Roleman::UP_IMG ? Roleman::UP_IMG_ALT : Roleman::UP_IMG
