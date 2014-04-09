@@ -1,28 +1,22 @@
 require 'rubygems'
 require 'rubygame'
+require './game_object'
+require './roleman'
 Rubygame::TTF.setup
 
 class Game
     def initialize
         @screen = Rubygame::Screen.new [640, 480], 0, [Rubygame::HWSURFACE, Rubygame::DOUBLEBUF]
-        @screen.title = "Pong"
+        @screen.title = "Role-Man"
 
         @queue = Rubygame::EventQueue.new
         @clock = Rubygame::Clock.new
         @clock.target_framerate = 60
 
         limit = @screen.height - 10
-        player_score_x = @screen.width * 0.20 #128
-        enemy_score_x = @screen.width * 0.70 #448
-        @player = Paddle.new 50, 10, \
-                player_score_x, 35, \
-                Rubygame::K_W, Rubygame::K_S, 10, limit
-        @enemy = Paddle.new @screen.width-50-@player.width, 10, \
-                enemy_score_x, 35, \
-                Rubygame::K_UP, Rubygame::K_DOWN, 10, limit
-        @player.center_y @screen.height
-        @enemy.center_y @screen.height
-        @ball = Ball.new @screen.width/2, @screen.height/2
+        limit_right = @screen.width - 10
+
+        @roleman = Roleman.new @screen.width/2, @screen.height/2, Rubygame::K_UP, Rubygame::K_DOWN, Rubygame::K_LEFT, Rubygame::K_RIGHT, 10, limit, 10,limit_right
         @won = false
 
         @win_text = Text.new
@@ -52,18 +46,12 @@ class Game
     end
 
     def update
-        @player.update
-        @enemy.update
-        @ball.update @screen, @player, @enemy unless @won
-        if @player.score == 3
-            win 1
-        elsif @enemy.score == 3
-            win 2
-        end
+
+        @roleman.update @screen unless @won
+
 
         @queue.each do |ev|
-            @player.handle_event ev
-            @enemy.handle_event ev
+            @roleman.handle_event ev
             case ev
                 when Rubygame::QuitEvent
                     Rubygame.quit
@@ -87,11 +75,11 @@ class Game
             end
         end
 
-        if collision? @ball, @player
-            @ball.collision @player, @screen
-        elsif collision? @ball, @enemy
-            @ball.collision @enemy, @screen
-        end
+        # if collision? @ball, @player
+        #     @ball.collision @player, @screen
+        # elsif collision? @ball, @enemy
+        #     @ball.collision @enemy, @screen
+        # end
     end
 
     def draw
@@ -99,9 +87,7 @@ class Game
 
         unless @won
             @background.draw @screen
-            @player.draw @screen
-            @enemy.draw @screen
-            @ball.draw @screen
+            @roleman.draw @screen
         else
             @win_text.draw @screen
             @play_again_text.draw @screen
@@ -119,35 +105,7 @@ class Game
     end
 end
 
-class GameObject
-    attr_accessor :x, :y, :width, :height, :surface
 
-    def initialize x, y, surface
-        @x = x
-        @y = y
-        @surface = surface
-        @width = surface.width
-        @height = surface.height
-    end
-
-    def update
-    end
-
-    def draw screen
-        @surface.blit screen, [@x, @y]
-    end
-
-    def handle_event event
-    end
-
-    def center_x w
-        @x = w/2-@width/2
-    end
-
-    def center_y h
-        @y = h/2-@height/2
-    end
-end
 
 class Paddle < GameObject
     def initialize x, y, score_x, score_y, up_key, down_key, top_limit, bottom_limit
@@ -223,66 +181,9 @@ class Background < GameObject
         # Right
         surface.draw_box_s [surface.width-10, 0], [surface.width, surface.height], white
         # Middle Divide
-        surface.draw_box_s [surface.width/2-5, 0], [surface.width/2+5, surface.height], white
+        #surface.draw_box_s [surface.width/2-5, 0], [surface.width/2+5, surface.height], white
 
         super 0, 0, surface
-    end
-end
-
-class Ball < GameObject
-    def initialize x, y
-        surface = Rubygame::Surface.load "ball.png"
-        @vx = @vy = 5
-        super x, y, surface
-    end
-
-    def update screen, player, enemy
-        @x += @vx
-        @y += @vy
-
-        # Left - Score for enemy
-        if @x <= 10
-            enemy.score += 1
-            score screen
-        end
-
-        # Right - Score for player
-        if @x+@width >= screen.width-10
-            player.score += 1
-            score screen
-        end
-
-        # Top or Bottom
-        if @y <= 10 or @y+@height >= screen.height-10
-            @vy *= -1
-        end
-    end
-
-    def score screen
-        @vx *= -1
-        # Move to somewhere in the middle two-fourths of the screen
-        @x = screen.width/4 + rand(screen.width/2)
-        # Spawn anywhere on the y-axis except along the edges
-        @y = rand(screen.height-50)+25
-    end
-
-    def collision paddle, screen
-        # Determine which paddle we've hit
-        # Left
-        if paddle.x < screen.width/2
-            # Check if we are behind the paddle
-            # (we use a 5 pixel buffer just in case)
-            unless @x < paddle.x-5
-                @x = paddle.x+paddle.width+1
-                @vx *= -1
-            end
-        # Right
-        else
-            unless @x > paddle.x+5
-                @x = paddle.x-@width-1
-                @vx *= -1
-            end
-        end
     end
 end
 
