@@ -23,4 +23,5 @@ Dependências
 ============
 
 ruby ( testado com 2.0)
+
 [rubygame](http://rubygame.org/wiki/Installation_Instructions)
